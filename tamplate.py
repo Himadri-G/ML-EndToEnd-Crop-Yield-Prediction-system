@@ -36,6 +36,8 @@ files = [
     f"src/{project_name}/pipeline/stage_03_data_preprocessing.py",
     f"src/{project_name}/pipeline/stage_04_data_training.py",
     f"src/{project_name}/pipeline/stage_05_data_evalution.py",
+    f"src/{project_name}/utils/logger.py",
+    
     "config/config.yaml",
     "params.yaml",
     "main.py",
