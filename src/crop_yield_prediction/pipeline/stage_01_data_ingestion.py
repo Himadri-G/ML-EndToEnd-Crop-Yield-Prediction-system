@@ -27,7 +27,10 @@ def main():
     
     data_ingestion = DataIngestion(config = data_ingestion_config)
     
-    data_ingestion.main_DataIngestion_part()
+    status = data_ingestion.main_DataIngestion_part()
+    
+    if not status:
+        raise Exception(f"{STAGE_NAME} is failed")
     
     logger.info(f"{STAGE_NAME} is completed !")
     
