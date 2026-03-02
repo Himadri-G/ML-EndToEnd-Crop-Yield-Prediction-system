@@ -12,7 +12,7 @@ logger = get_logger(
     
 )
 
-STAGE_NAME = "Data Training Stage"
+STAGE_NAME = "Model Training Stage"
 
 
 def main():
