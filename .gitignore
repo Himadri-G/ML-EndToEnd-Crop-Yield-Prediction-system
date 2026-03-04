@@ -2,8 +2,8 @@ crop_reco_env/
 __pycache__/
 *.pyc
 .env
-mlruns/
 data/raw_data/*.csv
 artifacts/
 mlruns/
 *.pkl
+mlflow.db
