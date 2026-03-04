@@ -7,11 +7,10 @@ import mlflow.sklearn
 
 from pathlib import Path
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import r2_score, root_mean_squared_error , mean_absolute_error
+from sklearn.metrics import r2_score, root_mean_squared_error, mean_absolute_error
 
 from crop_yield_prediction.entity.config_entity import ModelTrainingConfig
 from crop_yield_prediction.utils.logger import get_logger
-
 
 logger = get_logger(
     name=__name__,
@@ -19,7 +18,7 @@ logger = get_logger(
 )
 
 
-class ModelTrainer:
+class ModelTraining:
     def __init__(self, config: ModelTrainingConfig):
         self.config = config
 
@@ -77,7 +76,9 @@ class ModelTrainer:
             "random_state": rf_params["random_state"]
         }
 
+        # Nested run for each trial
         with mlflow.start_run(nested=True):
+
             model = RandomForestRegressor(**params)
             model.fit(X_train, y_train)
 
@@ -94,14 +95,12 @@ class ModelTrainer:
 
     # ------------------ MAIN TRAINING ------------------ #
     def train(self):
-        mlflow.set_tracking_uri("sqlite:///mlflow.db")
-        mlflow.set_experiment("Crop_Yield_Prediction")
-        
-        logger.info("Starting Optuna hyperparameter tuning with MLflow")
 
-        
-        mlflow.set_tracking_uri("sqlite:///mlflow.db")
-        mlflow.set_experiment("Crop_Yield_Prediction_Optuna")
+        # Set MLflow tracking
+        mlflow.set_tracking_uri("http://127.0.0.1:5000")
+        mlflow.set_experiment("Crop_Yield_Prediction")
+
+        logger.info("Starting Optuna hyperparameter tuning with MLflow")
 
         params = self._load_params()
         rf_params = params["random_forest"]
@@ -111,10 +110,11 @@ class ModelTrainer:
         X_train, y_train = self._split_features_target(train_df)
         X_test, y_test = self._split_features_target(test_df)
 
-        
         study = optuna.create_study(direction="maximize")
 
-        with mlflow.start_run(run_name="Optuna_Tuning"):
+        with mlflow.start_run(run_name="RandomForest_Optuna_Tuning"):
+
+            # Run Optuna optimization
             study.optimize(
                 lambda trial: self._objective(
                     trial, X_train, y_train, X_test, y_test, rf_params
@@ -126,46 +126,36 @@ class ModelTrainer:
             best_params["random_state"] = rf_params["random_state"]
 
             logger.info(f"Best R2 Score: {study.best_value}")
-            logger.info(f"Best parameters: {best_params}")
+            logger.info(f"Best Parameters: {best_params}")
 
-
+            # Train final best model
             best_model = RandomForestRegressor(**best_params)
             best_model.fit(X_train, y_train)
 
             preds = best_model.predict(X_test)
+
             final_r2 = r2_score(y_test, preds)
             final_rmse = root_mean_squared_error(y_test, preds, squared=False)
-            final_mae = mean_absolute_error(y_test , preds)
-            
-            
+            final_mae = mean_absolute_error(y_test, preds)
+
+            # Log final metrics
+            mlflow.log_params(best_params)
             mlflow.log_metric("final_r2_score", final_r2)
             mlflow.log_metric("final_rmse", final_rmse)
-            mlflow.log_metric("mae", final_mae)
-            
+            mlflow.log_metric("final_mae", final_mae)
+
+            # Log model + Register model
             mlflow.sklearn.log_model(
                 best_model,
-                artifact_path="model"
+                artifact_path="model",
+                registered_model_name="Crop_Yield_Model"
             )
 
-            
+            # Save locally
             Path(self.config.model_path).parent.mkdir(
                 parents=True, exist_ok=True
             )
             joblib.dump(best_model, self.config.model_path)
-    
-    
-    
-        with mlflow.start_run(run_name="RandomForest_Training"):
-            mlflow.log_params(best_params)
-            mlflow.log_metric("r2_score", final_r2)
-            mlflow.log_metric("rmse", final_rmse)
-            mlflow.log_metric("mae", final_mae)
-
-            mlflow.sklearn.log_model(
-            best_model,
-            artifact_path="model",
-            registered_model_name="Crop_Yield_Model"
-            )
 
         logger.info("Best model trained and saved successfully")
 

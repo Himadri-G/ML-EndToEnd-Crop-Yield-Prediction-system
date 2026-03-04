@@ -6,7 +6,7 @@ from crop_yield_prediction.entity.config_entity import (
     DataIngestionConfig,
     DataValidationConfig,
     DataPreprocessingConfig,
-    ModelTrainingConfig,
+    ModelTrainerConfig,
     ModelEvaluationConfig
 )
 
@@ -16,79 +16,121 @@ class ConfigManager:
     def __init__(self, config_path: Path):
         self.config = self._read_yaml(config_path)
 
-    def _read_yaml(self, file_path: Path):
-        with open(file_path, "r") as f:
-            return yaml.safe_load(f)
+    # ==============================
+    # YAML READER
+    # ==============================
 
+    def _read_yaml(self, config_path: Path):
+        if not config_path.exists():
+            raise FileNotFoundError(f"Config file not found at: {config_path}")
+
+        with open(config_path, "r") as file:
+            return yaml.safe_load(file)
+
+    # ==============================
+    # STAGE 01 — DATA INGESTION
+    # ==============================
 
     def get_data_ingestion_config(self) -> DataIngestionConfig:
 
-        ingestion = self.config["data_ingestion"]
-        os.makedirs(ingestion["root_dir"], exist_ok=True)
+        ingestion = self.config.get("data_ingestion")
+        if ingestion is None:
+            raise ValueError("data_ingestion section missing in config.yaml")
+
+        root_dir = Path(ingestion["root_dir"])
+        os.makedirs(root_dir, exist_ok=True)
 
         return DataIngestionConfig(
-            root_dir=Path(ingestion["root_dir"]),
-            source_path=Path(ingestion["source_path"]),
-            train_path=Path(ingestion["train_path"]),
-            test_path=Path(ingestion["test_path"])
+            root_dir=root_dir,
+            source_dir=Path(ingestion["source_dir"]),
+            train_dir=Path(ingestion["train_dir"]),
+            test_dir=Path(ingestion["test_dir"]),
         )
 
- 
+    # ==============================
+    # STAGE 02 — DATA VALIDATION
+    # ==============================
+
     def get_data_validation_config(self) -> DataValidationConfig:
 
-        validation = self.config["data_validation"]
-        os.makedirs(validation["root_dir"], exist_ok=True)
+        validation = self.config.get("data_validation")
+        if validation is None:
+            raise ValueError("data_validation section missing in config.yaml")
+
+        root_dir = Path(validation["root_dir"])
+        os.makedirs(root_dir, exist_ok=True)
 
         return DataValidationConfig(
-            root_dir=Path(validation["root_dir"]),
+            root_dir=root_dir,
             validation_status_file=Path(validation["validation_status_file"]),
-            train_path=Path(validation["train_path"]),
-            schema_file=Path(validation["schema_file"])
+            train_dir=Path(validation["train_dir"]),
+            schema_file=Path(validation["schema_file"]),
         )
 
-  
+    # ==============================
+    # STAGE 03 — DATA PREPROCESSING
+    # ==============================
+
     def get_data_preprocessing_config(self) -> DataPreprocessingConfig:
 
-        preprocessing = self.config["data_preprocessing"]
-        ingestion = self.config["data_ingestion"]
+        preprocessing = self.config.get("data_preprocessing")
+        ingestion = self.config.get("data_ingestion")
 
-        os.makedirs(preprocessing["root_dir"], exist_ok=True)
+        if preprocessing is None:
+            raise ValueError("data_preprocessing section missing in config.yaml")
+
+        root_dir = Path(preprocessing["root_dir"])
+        os.makedirs(root_dir, exist_ok=True)
 
         return DataPreprocessingConfig(
-            root_dir=Path(preprocessing["root_dir"]),
-            train_path=Path(ingestion["train_path"]),
-            test_path=Path(ingestion["test_path"]),
-            processed_train_path=Path(preprocessing["processed_train_path"]),
-            processed_test_path=Path(preprocessing["processed_test_path"]),
-            scaler_path=Path(preprocessing["scaler_path"])
+            root_dir=root_dir,
+            train_dir=Path(ingestion["train_dir"]),
+            test_dir=Path(ingestion["test_dir"]),
+            processed_train_dir=Path(preprocessing["processed_train_dir"]),
+            processed_test_dir=Path(preprocessing["processed_test_dir"]),
+            scaler_path=Path(preprocessing["scaler_path"]),
         )
 
+    # ==============================
+    # STAGE 04 — MODEL TRAINING
+    # ==============================
 
-    def get_model_trainer_config(self) -> ModelTrainingConfig:
+    def get_model_trainer_config(self) -> ModelTrainerConfig:
 
-        trainer = self.config["model_trainer"]
-        preprocessing = self.config["data_preprocessing"]
+        trainer = self.config.get("model_trainer")
+        preprocessing = self.config.get("data_preprocessing")
 
-        os.makedirs(trainer["root_dir"], exist_ok=True)
+        if trainer is None:
+            raise ValueError("model_trainer section missing in config.yaml")
 
-        return ModelTrainingConfig(
-            root_dir=Path(trainer["root_dir"]),
-            processed_train_path=Path(preprocessing["processed_train_path"]),
-            processed_test_path=Path(preprocessing["processed_test_path"]),
+        root_dir = Path(trainer["root_dir"])
+        os.makedirs(root_dir, exist_ok=True)
+
+        return ModelTrainerConfig(
+            root_dir=root_dir,
+            processed_train_dir=Path(preprocessing["processed_train_dir"]),
+            processed_test_dir=Path(preprocessing["processed_test_dir"]),
             model_path=Path(trainer["model_path"]),
-            params_file=Path(trainer["params_file"])
+            params_file=Path(trainer["params_file"]),
         )
 
- 
+    # ==============================
+    # STAGE 05 — MODEL EVALUATION
+    # ==============================
+
     def get_model_evaluation_config(self) -> ModelEvaluationConfig:
 
-        evaluation = self.config["model_evaluation"]
+        evaluation = self.config.get("model_evaluation")
 
-        os.makedirs(evaluation["root_dir"], exist_ok=True)
+        if evaluation is None:
+            raise ValueError("model_evaluation section missing in config.yaml")
+
+        root_dir = Path(evaluation["root_dir"])
+        os.makedirs(root_dir, exist_ok=True)
 
         return ModelEvaluationConfig(
-            root_dir=Path(evaluation["root_dir"]),
+            root_dir=root_dir,
             model_path=Path(evaluation["model_path"]),
-            processed_test_path=Path(evaluation["processed_test_path"]),
-            metrics_file=Path(evaluation["metrics_file"])
+            processed_test_dir=Path(evaluation["processed_test_dir"]),
+            metrics_file=Path(evaluation["metrics_file"]),
         )
