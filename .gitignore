@@ -7,3 +7,7 @@ artifacts/
 mlruns/
 *.pkl
 mlflow.db
+build/
+logs/
+*.egg-info
+.ipynb_checkpoints/

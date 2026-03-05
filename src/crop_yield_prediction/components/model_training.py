@@ -14,7 +14,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from sklearn.metrics import r2_score, mean_squared_error
 
 from crop_yield_prediction.entity.config_entity import ModelTrainingConfig
 from crop_yield_prediction.utils.logger import get_logger
@@ -23,11 +23,14 @@ logger = get_logger(__name__, "model_training.log")
 
 
 class ModelTraining:
+
     def __init__(self, config: ModelTrainingConfig):
         self.config = config
 
-    # ------------------ LOAD PARAMS ------------------ #
+    # ---------------- LOAD PARAMS ---------------- #
+
     def _load_params(self):
+
         with open(self.config.params_file, "r") as f:
             params = yaml.safe_load(f)
 
@@ -39,34 +42,77 @@ class ModelTraining:
 
         return params
 
-    # ------------------ LOAD DATA ------------------ #
+    # ---------------- LOAD DATA ---------------- #
+
     def _load_data(self):
+
         train_df = pd.read_csv(self.config.preprocessed_train_dir)
         test_df = pd.read_csv(self.config.preprocessed_test_dir)
+
         return train_df, test_df
 
+    # ---------------- SPLIT FEATURES ---------------- #
+
     def _split_features_target(self, df):
+
         X = df.drop(columns=[self.config.target_column])
         y = df[self.config.target_column]
+
         return X, y
 
-    # ------------------ MODEL FACTORY ------------------ #
+    # ---------------- MODEL FACTORY ---------------- #
+
     def _get_model(self, model_name, params):
 
-        models = {
-            "linear_regression": LinearRegression(),
-            "ridge": Ridge(**params),
-            "lasso": Lasso(**params),
-            "elasticnet": ElasticNet(**params),
-            "decision_tree": DecisionTreeRegressor(**params),
-            "gradient_boosting": GradientBoostingRegressor(**params),
-            "svr": SVR(**params),
-            "knn": KNeighborsRegressor(**params)
-        }
+        if model_name == "linear_regression":
+            return LinearRegression()
 
-        return models[model_name]
+        elif model_name == "ridge":
+            return Ridge(
+                alpha=params.get("alpha", 1.0)
+            )
 
-    # ------------------ OPTUNA OBJECTIVE ------------------ #
+        elif model_name == "lasso":
+            return Lasso(
+                alpha=params.get("alpha", 1.0)
+            )
+
+        elif model_name == "elasticnet":
+            return ElasticNet(
+                alpha=params.get("alpha", 1.0),
+                l1_ratio=params.get("l1_ratio", 0.5)
+            )
+
+        elif model_name == "decision_tree":
+            return DecisionTreeRegressor(
+                max_depth=params.get("max_depth"),
+                min_samples_split=params.get("min_samples_split", 2)
+            )
+
+        elif model_name == "gradient_boosting":
+            return GradientBoostingRegressor(
+                n_estimators=params.get("n_estimators", 100),
+                learning_rate=params.get("learning_rate", 0.1),
+                max_depth=params.get("max_depth", 3)
+            )
+
+        elif model_name == "svr":
+            return SVR(
+                C=params.get("C", 1.0),
+                epsilon=params.get("epsilon", 0.1)
+            )
+
+        elif model_name == "knn":
+            return KNeighborsRegressor(
+                n_neighbors=params.get("n_neighbors", 5),
+                weights=params.get("weights", "uniform")
+            )
+
+        else:
+            raise ValueError(f"Unknown model: {model_name}")
+
+    # ---------------- OPTUNA OBJECTIVE ---------------- #
+
     def _objective(self, trial, model_name, param_space, X_train, y_train, X_test, y_test):
 
         params = {}
@@ -82,22 +128,30 @@ class ModelTraining:
             elif values["type"] == "categorical":
                 params[param] = trial.suggest_categorical(param, values["choices"])
 
-        model = self._get_model(model_name, params)
+        try:
 
-        model.fit(X_train, y_train)
+            model = self._get_model(model_name, params)
 
-        preds = model.predict(X_test)
+            model.fit(X_train, y_train)
 
-        r2 = r2_score(y_test, preds)
-        rmse = np.sqrt(mean_squared_error(y_test, preds))
+            preds = model.predict(X_test)
 
-        mlflow.log_params(params)
-        mlflow.log_metric("r2_score", r2)
-        mlflow.log_metric("rmse", rmse)
+            r2 = r2_score(y_test, preds)
+            rmse = np.sqrt(mean_squared_error(y_test, preds))
 
-        return r2
+            mlflow.log_params(params)
+            mlflow.log_metric(f"{model_name}_r2", r2)
+            mlflow.log_metric(f"{model_name}_rmse", rmse)
 
-    # ------------------ MAIN TRAINING ------------------ #
+            return r2
+
+        except Exception as e:
+
+            logger.error(f"Trial failed for {model_name}: {e}")
+            return -1
+
+    # ---------------- MAIN TRAINING ---------------- #
+
     def main_ModelTraining_part(self):
 
         mlflow.set_tracking_uri(self.config.mlflow_tracking_uri)
@@ -149,8 +203,12 @@ class ModelTraining:
                 preds = model.predict(X_test)
 
                 r2 = r2_score(y_test, preds)
+                rmse = np.sqrt(mean_squared_error(y_test, preds))
+
+                logger.info(f"{model_name} R2 Score: {r2}")
 
                 if r2 > best_score:
+
                     best_score = r2
                     best_model = model
                     best_model_name = model_name
@@ -167,7 +225,7 @@ class ModelTraining:
             registered_model_name=self.config.mlflow_registered_model_name
         )
 
-        logger.info(f"Best model: {best_model_name}")
-        logger.info(f"Best R2 score: {best_score}")
+        logger.info(f"Best Model: {best_model_name}")
+        logger.info(f"Best R2 Score: {best_score}")
 
         return self.config.model_path

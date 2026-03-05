@@ -1,0 +1,59 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python -m crop_yield_prediction.pipeline.stage_01_data_ingestion
+    deps:
+    - path: config/config.yaml
+      hash: md5
+      md5: 7ee05e6b1ac8978c5874711ea0de2169
+      size: 1084
+    - path: src/crop_yield_prediction/pipeline/stage_01_data_ingestion.py
+      hash: md5
+      md5: e77c19a6f5f789e39957dcd2b8392c3c
+      size: 745
+    outs:
+    - path: artifacts/data_ingestion
+      hash: md5
+      md5: 6cdb2b683edb4b4e7175d6b2bade680a.dir
+      size: 3130868
+      nfiles: 3
+  data_validation:
+    cmd: python -m crop_yield_prediction.pipeline.stage_02_data_validation
+    deps:
+    - path: artifacts/data_ingestion
+      hash: md5
+      md5: 6cdb2b683edb4b4e7175d6b2bade680a.dir
+      size: 3130868
+      nfiles: 3
+    - path: config/schema.yaml
+      hash: md5
+      md5: 8b5fcf9d47686cd49a3bf6bb2efb0ce3
+      size: 172
+    - path: src/crop_yield_prediction/pipeline/stage_02_data_validation.py
+      hash: md5
+      md5: 07759a4de65b7f644b9376a85f9198c7
+      size: 844
+    outs:
+    - path: artifacts/data_validation
+      hash: md5
+      md5: 9dc4b4377efd0b18b66c7957216e83c9.dir
+      size: 4
+      nfiles: 1
+  data_preprocessing:
+    cmd: python -m crop_yield_prediction.pipeline.stage_03_data_preprocessing
+    deps:
+    - path: artifacts/data_validation
+      hash: md5
+      md5: 9dc4b4377efd0b18b66c7957216e83c9.dir
+      size: 4
+      nfiles: 1
+    - path: src/crop_yield_prediction/pipeline/stage_03_data_preprocessing.py
+      hash: md5
+      md5: bc03f4763306327e89926da5d927b9c9
+      size: 780
+    outs:
+    - path: artifacts/data_preprocessing
+      hash: md5
+      md5: 0a6cee9c632daa3e424ae79060e25c84.dir
+      size: 15513509
+      nfiles: 3

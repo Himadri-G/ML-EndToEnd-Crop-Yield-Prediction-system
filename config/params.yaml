@@ -6,20 +6,20 @@ models:
   ridge:
     alpha:
       type: float
-      low: 0.01
-      high: 10
+      low: 0.001
+      high: 10.0
 
   lasso:
     alpha:
       type: float
       low: 0.001
-      high: 1
+      high: 10.0
 
   elasticnet:
     alpha:
       type: float
       low: 0.001
-      high: 1
+      high: 10.0
     l1_ratio:
       type: float
       low: 0.1
@@ -28,27 +28,53 @@ models:
   decision_tree:
     max_depth:
       type: int
-      low: 3
+      low: 2
       high: 20
+    min_samples_split:
+      type: int
+      low: 2
+      high: 10
+    min_samples_leaf:
+      type: int
+      low: 1
+      high: 5
 
   gradient_boosting:
     n_estimators:
       type: int
-      low: 100
-      high: 400
+      low: 50
+      high: 200
     learning_rate:
       type: float
       low: 0.01
       high: 0.3
+    max_depth:
+      type: int
+      low: 2
+      high: 10
 
   svr:
     C:
       type: float
       low: 0.1
-      high: 10
+      high: 10.0
+    epsilon:
+      type: float
+      low: 0.01
+      high: 1.0
+    kernel:
+      type: categorical
+      choices: ["rbf", "linear", "poly"]
 
   knn:
     n_neighbors:
       type: int
       low: 3
       high: 15
+    weights:
+      type: categorical
+      choices: ["uniform", "distance"]
+    p:
+      type: int
+      low: 1
+      high: 2
