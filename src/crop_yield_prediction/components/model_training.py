@@ -76,7 +76,7 @@ class ModelTraining:
             "random_state": rf_params["random_state"]
         }
 
-        # Nested run for each trial
+        
         with mlflow.start_run(nested=True):
 
             model = RandomForestRegressor(**params)
@@ -95,8 +95,6 @@ class ModelTraining:
 
     # ------------------ MAIN TRAINING ------------------ #
     def train(self):
-
-        # Set MLflow tracking
         mlflow.set_tracking_uri("http://127.0.0.1:5000")
         mlflow.set_experiment("Crop_Yield_Prediction")
 
@@ -114,7 +112,6 @@ class ModelTraining:
 
         with mlflow.start_run(run_name="RandomForest_Optuna_Tuning"):
 
-            # Run Optuna optimization
             study.optimize(
                 lambda trial: self._objective(
                     trial, X_train, y_train, X_test, y_test, rf_params
@@ -128,7 +125,7 @@ class ModelTraining:
             logger.info(f"Best R2 Score: {study.best_value}")
             logger.info(f"Best Parameters: {best_params}")
 
-            # Train final best model
+
             best_model = RandomForestRegressor(**best_params)
             best_model.fit(X_train, y_train)
 
@@ -138,20 +135,19 @@ class ModelTraining:
             final_rmse = root_mean_squared_error(y_test, preds, squared=False)
             final_mae = mean_absolute_error(y_test, preds)
 
-            # Log final metrics
+            
             mlflow.log_params(best_params)
             mlflow.log_metric("final_r2_score", final_r2)
             mlflow.log_metric("final_rmse", final_rmse)
             mlflow.log_metric("final_mae", final_mae)
 
-            # Log model + Register model
+            
             mlflow.sklearn.log_model(
                 best_model,
                 artifact_path="model",
                 registered_model_name="Crop_Yield_Model"
             )
 
-            # Save locally
             Path(self.config.model_path).parent.mkdir(
                 parents=True, exist_ok=True
             )
