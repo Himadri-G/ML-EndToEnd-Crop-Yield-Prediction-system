@@ -151,7 +151,7 @@ The pipeline consists of **5 stages**:
 * Calculates evaluation metrics
 * Logs results to **MLflow**
 
----
+```
 
 # 📊 Model Used
 
@@ -166,13 +166,13 @@ Evaluation metrics:
 * RMSE
 * R² Score
 
----
+```
 
 # 📦 Installation
 
 Clone the repository:
 
-```bash
+```
 git clone https://github.com/Himadri-G/ML-EndToEnd-Crop-Recommandation-system.git
 cd ML-EndToEnd-Crop-Recommandation-system
 ```
