@@ -62,7 +62,7 @@ class ConfigManager:
         root_dir = Path(preprocessing["root_dir"])
         os.makedirs(root_dir, exist_ok=True)
 
-        # Use ingestion for train/test input, preprocessing section for preprocessed output
+         
         return DataPreprocessingConfig(
             root_dir=root_dir,
             train_dir=Path(ingestion["train_dir"]),
