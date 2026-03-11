@@ -8,17 +8,17 @@ import numpy as np
 
 from pathlib import Path
 
-<<<<<<< HEAD
+ 
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 
-=======
+ 
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.pipeline import Pipeline
->>>>>>> cbad126 (updated file)
+ 
 from sklearn.metrics import r2_score, mean_squared_error
 
 from crop_yield_prediction.entity.config_entity import ModelTrainingConfig
@@ -75,11 +75,6 @@ class ModelTraining:
                 learning_rate=params.get("learning_rate", 0.1),
                 max_depth=params.get("max_depth", 3)
             )
-
-<<<<<<< HEAD
-        
-=======
->>>>>>> cbad126 (updated file)
         else:
             raise ValueError(f"Unknown model: {model_name}")
 
@@ -194,7 +189,7 @@ class ModelTraining:
 
         mlflow.sklearn.log_model(
             best_model,
-=======
+ 
             logger.info(f"best model selected : {best_model_name}")
 
             # ---------------- CREATE PIPELINE ---------------- #
@@ -213,14 +208,14 @@ class ModelTraining:
 
         mlflow.sklearn.log_model(
             pipeline,
->>>>>>> cbad126 (updated file)
+
             artifact_path="model",
             registered_model_name=self.config.mlflow_registered_model_name
         )
 
         logger.info(f"Best Model: {best_model_name}")
         logger.info(f"Best R2 Score: {best_score}")
-<<<<<<< HEAD
+ 
 =======
         logger.info(f"Pipeline saved at: {self.config.model_path}")
 >>>>>>> cbad126 (updated file)
