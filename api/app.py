@@ -16,15 +16,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Load the trained model
+ 
 pipeline = joblib.load("artifacts/model_trainer/pipeline.pkl")
 
-# Get the exact feature names the model was trained on
+ 
 try:
-    training_columns = pipeline.feature_names_in_         # if model exposes it directly
+    training_columns = pipeline.feature_names_in_         
 except AttributeError:
-    training_columns = pipeline[-1].feature_names_in_     # get from last step of Pipeline
+    training_columns = pipeline[-1].feature_names_in_    
 
 
 # ── Pydantic input schema ─────────────────────────────────────────────────────
@@ -67,7 +66,7 @@ def encode_input(data: CropInput) -> pd.DataFrame:
     Manually one-hot encode Area and Item to match the columns
     seen during model training (e.g. Area_Albania, Item_Maize).
     """
-    # Numeric features
+   
     row = {
         "Year": data.Year,
         "average_rain_fall_mm_per_year": data.average_rain_fall_mm_per_year,
@@ -75,7 +74,7 @@ def encode_input(data: CropInput) -> pd.DataFrame:
         "avg_temp": data.avg_temp,
     }
 
-    # Validate and one-hot encode Area
+    
     area_col = f"Area_{data.Area}"
     item_col = f"Item_{data.Item}"
 
@@ -90,7 +89,7 @@ def encode_input(data: CropInput) -> pd.DataFrame:
     row[area_col] = 1
     row[item_col] = 1
 
-    # Build DataFrame, fill all other OHE columns with 0
+  
     input_df = pd.DataFrame([row])
     input_df = input_df.reindex(columns=training_columns, fill_value=0)
 
