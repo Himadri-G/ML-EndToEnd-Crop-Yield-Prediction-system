@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+crop_env/
+venv/
+
+# DVC
+.dvc/cache/
+.dvc/tmp/
+.dvc/config
+
+# ML artifacts
+artifacts/
+logs/
+mlartifacts/
+mlflow.db
+
+# dataset
+data/
+
+# secrets
+client_secret*.json
+*.env
