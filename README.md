@@ -311,11 +311,6 @@ Example logs:
 * Deploy with **Docker**
 * Add **CI/CD pipeline**
 * Deploy on **AWS / GCP**
-
----
-Here is the **complete Markdown code you can directly paste into your `README.md`** to add the **FastAPI model serving section**.
-
-````markdown
 ---
 
 # 🚀 Model Serving with FastAPI
