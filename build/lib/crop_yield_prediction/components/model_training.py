@@ -4,12 +4,12 @@ import joblib
 import optuna
 import mlflow
 import mlflow.sklearn
-<<<<<<< HEAD
+
 
 from pathlib import Path
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-=======
+
 import numpy as np
 
 from pathlib import Path
@@ -17,12 +17,12 @@ from pathlib import Path
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import r2_score, mean_squared_error
->>>>>>> cbad126 (updated file)
+
 
 from crop_yield_prediction.entity.config_entity import ModelTrainingConfig
 from crop_yield_prediction.utils.logger import get_logger
 
-<<<<<<< HEAD
+
 logger = get_logger(
     name=__name__,
     log_file="model_training.log"
@@ -35,7 +35,7 @@ class ModelTraining:
 
     # ------------------ LOAD PARAMS ------------------ #
     def _load_params(self):
-=======
+
 logger = get_logger(__name__, "model_training.log")
 
 
@@ -48,12 +48,12 @@ class ModelTraining:
 
     def _load_params(self):
 
->>>>>>> cbad126 (updated file)
+
         with open(self.config.params_file, "r") as f:
             params = yaml.safe_load(f)
 
         if not params:
-<<<<<<< HEAD
+
             raise ValueError("params.yaml is empty or invalid")
 
         if "random_forest" not in params:
@@ -180,7 +180,7 @@ class ModelTraining:
             joblib.dump(best_model, self.config.model_path)
 
         logger.info("Best model trained and saved successfully")
-=======
+
             raise ValueError("params.yaml is empty")
 
         if "optuna" not in params:
@@ -348,5 +348,5 @@ class ModelTraining:
         logger.info(f"Best R2 Score: {best_score}")
         logger.info(f"Pipeline saved at: {self.config.model_path}")
 
->>>>>>> cbad126 (updated file)
+
         return self.config.model_path

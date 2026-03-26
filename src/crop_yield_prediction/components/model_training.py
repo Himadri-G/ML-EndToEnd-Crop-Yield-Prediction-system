@@ -180,7 +180,7 @@ class ModelTraining:
                     best_model = model
                     best_model_name = model_name
 
-<<<<<<< HEAD
+
         # ---------------- SAVE BEST MODEL ---------------- #
 
         Path(self.config.model_path).parent.mkdir(parents=True, exist_ok=True)
@@ -216,8 +216,8 @@ class ModelTraining:
         logger.info(f"Best Model: {best_model_name}")
         logger.info(f"Best R2 Score: {best_score}")
  
-=======
+
         logger.info(f"Pipeline saved at: {self.config.model_path}")
->>>>>>> cbad126 (updated file)
+
 
         return self.config.model_path
