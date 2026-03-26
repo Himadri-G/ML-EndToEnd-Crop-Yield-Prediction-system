@@ -39,7 +39,6 @@ class DataIngestion:
         try:
             raw_data_path = Path(self.config.root_dir) / "raw.csv"
             
-            # ✅ Save without index to prevent future issues
             df.to_csv(raw_data_path, index=False)
             
             logger.info(f"Raw data saved at {raw_data_path}")
@@ -72,19 +71,18 @@ class DataIngestion:
         try:
             logger.info("Starting Data Ingestion process")
             
-            # ✅ Create root directory
+      
             os.makedirs(self.config.root_dir, exist_ok=True)
             
-            # Step 1: Read data
+      
             df = self._read_data()
             
-            # Step 2: Save raw data
+           
             self._save_rawData(df)
             
-            # Step 3: Split data
+           
             train_df, test_df = self._split_data(df)
-            
-            # Step 4: Save train & test data
+        
             train_df.to_csv(self.config.train_dir, index=False)
             test_df.to_csv(self.config.test_dir, index=False)
             
