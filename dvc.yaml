@@ -35,21 +35,16 @@ stages:
       - artifacts/data_preprocessing
       - config/params.yaml
     outs:
-<<<<<<< HEAD
       - artifacts/model_training
-=======
+
       - artifacts/model_trainer
->>>>>>> cbad126 (updated file)
-
-
   model_evaluation:
     cmd: python -m crop_yield_prediction.pipeline.stage_05_model_evaluation
     deps:
       - src/crop_yield_prediction/pipeline/stage_05_model_evaluation.py
-<<<<<<< HEAD
+
       - artifacts/model_training
-=======
+
       - artifacts/model_trainer
->>>>>>> cbad126 (updated file)
     metrics:
       - artifacts/model_evaluation/metrics.json
