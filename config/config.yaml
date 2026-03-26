@@ -24,6 +24,7 @@ model_training:
   root_dir: artifacts/model_trainer
   model_path: artifacts/model_trainer/pipeline.pkl
   params_file: config/params.yaml
+  random_state: 42
 
 
 model_evaluation:

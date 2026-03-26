@@ -10,6 +10,7 @@ venv/
 .dvc/cache/
 .dvc/tmp/
 .dvc/config
+.dvc/lock
 
 # ML artifacts
 artifacts/

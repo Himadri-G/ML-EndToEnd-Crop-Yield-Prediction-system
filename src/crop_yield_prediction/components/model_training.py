@@ -13,6 +13,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.pipeline import Pipeline
 
 from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.model_selection import cross_val_score, KFold
 
 from crop_yield_prediction.entity.config_entity import ModelTrainingConfig
 from crop_yield_prediction.utils.logger import get_logger
@@ -66,14 +67,31 @@ class ModelTraining:
             return GradientBoostingRegressor(
                 n_estimators=params.get("n_estimators", 100),
                 learning_rate=params.get("learning_rate", 0.1),
-                max_depth=params.get("max_depth", 3)
+                max_depth=params.get("max_depth", 3),
+                random_state=self.config.random_state
             )
         else:
             raise ValueError(f"Unknown model: {model_name}")
 
+    # ---------------- CROSS VALIDATION ---------------- #
+
+    def _cross_validate(self, model, X, y, cv):
+
+        kf = KFold(n_splits=cv, shuffle=True, random_state=self.config.random_state)
+
+        cv_scores = cross_val_score(model, X, y, cv=kf, scoring="r2", n_jobs=-1)
+
+        mean_cv_r2 = cv_scores.mean()
+        std_cv_r2 = cv_scores.std()
+
+        logger.info(f"CV R2 Scores: {np.round(cv_scores, 4)}")
+        logger.info(f"Mean CV R2: {mean_cv_r2:.4f} ± {std_cv_r2:.4f}")
+
+        return mean_cv_r2, std_cv_r2
+
     # ---------------- OPTUNA OBJECTIVE ---------------- #
 
-    def _objective(self, trial, model_name, param_space, X_train, y_train, X_test, y_test):
+    def _objective(self, trial, model_name, param_space, X_train, y_train, cv):
 
         params = {}
 
@@ -92,18 +110,13 @@ class ModelTraining:
 
             model = self._get_model(model_name, params)
 
-            model.fit(X_train, y_train)
-
-            preds = model.predict(X_test)
-
-            r2 = r2_score(y_test, preds)
-            rmse = np.sqrt(mean_squared_error(y_test, preds))
+            mean_cv_r2, std_cv_r2 = self._cross_validate(model, X_train, y_train, cv)
 
             mlflow.log_params(params)
-            mlflow.log_metric(f"{model_name}_r2", r2)
-            mlflow.log_metric(f"{model_name}_rmse", rmse)
+            mlflow.log_metric(f"{model_name}_cv_mean_r2", mean_cv_r2)
+            mlflow.log_metric(f"{model_name}_cv_std_r2", std_cv_r2)
 
-            return r2
+            return mean_cv_r2
 
         except Exception as e:
 
@@ -122,6 +135,8 @@ class ModelTraining:
         params = self._load_params()
 
         n_trials = params["optuna"]["n_trials"]
+        cv = params["optuna"].get("cv", 5)
+        random_state = params["optuna"].get("random_state", self.config.random_state)
         models_params = params["models"]
 
         train_df, test_df = self._load_data()
@@ -139,7 +154,10 @@ class ModelTraining:
 
                 logger.info(f"Tuning model: {model_name}")
 
-                study = optuna.create_study(direction="maximize")
+                study = optuna.create_study(
+                    direction="maximize",
+                    sampler=optuna.samplers.TPESampler(seed=random_state)
+                )
 
                 study.optimize(
                     lambda trial: self._objective(
@@ -148,8 +166,7 @@ class ModelTraining:
                         param_space,
                         X_train,
                         y_train,
-                        X_test,
-                        y_test
+                        cv
                     ),
                     n_trials=n_trials
                 )
@@ -160,16 +177,24 @@ class ModelTraining:
 
                 model.fit(X_train, y_train)
 
+                # Final evaluation on held-out test set
                 preds = model.predict(X_test)
-
                 r2 = r2_score(y_test, preds)
                 rmse = np.sqrt(mean_squared_error(y_test, preds))
 
-                logger.info(f"{model_name} -> R2: {r2:.4f}, RMSE: {rmse:.4f}")
+                # Final cross validation on full train set with best params
+                mean_cv_r2, std_cv_r2 = self._cross_validate(model, X_train, y_train, cv)
 
-                if r2 > best_score:
+                mlflow.log_metric(f"{model_name}_test_r2", r2)
+                mlflow.log_metric(f"{model_name}_test_rmse", rmse)
+                mlflow.log_metric(f"{model_name}_final_cv_mean_r2", mean_cv_r2)
+                mlflow.log_metric(f"{model_name}_final_cv_std_r2", std_cv_r2)
 
-                    best_score = r2
+                logger.info(f"{model_name} -> Test R2: {r2:.4f}, RMSE: {rmse:.4f}, CV R2: {mean_cv_r2:.4f} ± {std_cv_r2:.4f}")
+
+                if mean_cv_r2 > best_score:
+
+                    best_score = mean_cv_r2
                     best_model = model
                     best_model_name = model_name
 
@@ -198,6 +223,6 @@ class ModelTraining:
         )
 
         logger.info(f"Best Model: {best_model_name}")
-        logger.info(f"Best R2 Score: {best_score:.4f}")
+        logger.info(f"Best CV R2 Score: {best_score:.4f}")
 
         return self.config.model_path

@@ -1,6 +1,7 @@
 optuna:
   n_trials: 20
-
+  cv: 5
+  random_state: 42
 models:
 
   gradient_boosting:
@@ -16,4 +17,3 @@ models:
       type: int
       low: 2
       high: 10
-

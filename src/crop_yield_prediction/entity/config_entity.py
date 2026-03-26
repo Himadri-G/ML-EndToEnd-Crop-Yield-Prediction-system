@@ -31,6 +31,7 @@ class ModelTrainingConfig:
     preprocessed_test_dir: Path
     model_path: Path
     params_file: Path
+    random_state: int = 42
     target_column: str = "hg/ha_yield"  
     mlflow_tracking_uri: str = "http://127.0.0.1:5000"  
     mlflow_experiment_name: str = "Crop Yield Prediction" 
@@ -45,4 +46,4 @@ class ModelEvaluationConfig:
     target_column: str = "hg/ha_yield"
     mlflow_tracking_uri: str = "http://127.0.0.1:5000"  
     mlflow_experiment_name: str = "Crop Yield Prediction" 
-    mlflow_registered_model_name: str = "gradiant boosting" 
+    mlflow_registered_model_name: str = "gradiant boosting"
